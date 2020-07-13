@@ -24,8 +24,9 @@
 debug="off" # turn "on" for debugging
 # IMPORTANT OPTIONS #
 service_name="rsync-to-picture-frame" # use something specific and memorable
-frame_address="192.168.1.100:2221" # you can find this on the frame, best to make static
-source_dir="$HOME/Pictures/picture_frame" # source pictures/content from this directory
+description="Mount picture frame ftp share and rsync syncthing picture_frame directory to it" # a short description
+ftp_share="192.168.1.100:2221" # source share, best to make this a static address if you can
+source_dir="$HOME/Pictures/picture_frame" # source files from this directory
 # Less important options
 user="$(id -un)" # default run as current user
 user_id="$(id -u)" # default run as current user
@@ -156,7 +157,7 @@ main() {
   make_exec "$script_dir/$service_name.sh"
   f_and_r "{{mount_dir}}" "$mount_dir" "$script_dir/$service_name.sh"
   f_and_r "{{source_dir}}" "$source_dir" "$script_dir/$service_name.sh"
-  f_and_r "{{frame_address}}" "$frame_address" "$script_dir/$service_name.sh"
+  f_and_r "{{ftp_share}}" "$ftp_share" "$script_dir/$service_name.sh"
   f_and_r "{{user_id}}" "$user_id" "$script_dir/$service_name.sh"
   f_and_r "{{group_id}}" "$group_id" "$script_dir/$service_name.sh"
   f_and_r "{{temp_dir}}" "$temp_dir" "$script_dir/$service_name.sh"
@@ -164,10 +165,12 @@ main() {
   # Copy service file
   cp_file "original.service" "$service_dir/$service_name.service"
   f_and_r "{{path_to_script}}" "$script_dir/$service_name.sh" "$service_dir/$service_name.service"
+  f_and_r "{{description}}" "$script_dir/$service_name.sh" "$service_dir/$service_name.service"
 
   # Copy timer file
   cp_file "original.timer" "$service_dir/$service_name.timer"
   f_and_r "{{on_calendar}}" "$on_calendar" "$service_dir/$service_name.timer"
+  f_and_r "{{description}}" "$description" "$service_dir/$service_name.timer"
 
   # Enable timer
   debug "systemctl --user daemon-reload"

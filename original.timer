@@ -1,5 +1,5 @@
 [Unit]
-Description="Transfer photos to picture frame hourly"
+Description="{{description}}"
 
 [Timer]
 OnBootSec=1min

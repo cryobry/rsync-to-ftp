@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# This script will mount mom's photo frame ftp share locally
-# Use install.sh to change settings
+# Use install.sh to edit settings
 
 # if the mount already exists, unmount it
 mountpoint -q -- "{{mount_dir}}" && fusermount -u "{{mount_dir}}"
@@ -9,7 +8,7 @@ mountpoint -q -- "{{mount_dir}}" && fusermount -u "{{mount_dir}}"
 [[ ! -d "{{temp_dir}}" ]] && mkdir -p "{{temp_dir}}"
 
 # Mount it and rsync over the photos
-if curlftpfs -o uid="{{user_id}}",gid="{{group_id}}" "{{frame_address}}" "{{mount_dir}}"; then
+if curlftpfs -o uid="{{user_id}}",gid="{{group_id}}" "{{ftp_share}}" "{{mount_dir}}"; then
   if ! rsync -r --delete --quiet --temp-dir="{{temp_dir}}" "{{source_dir}}/" "{{mount_dir}}"; then
     echo "rsync -r --delete --quiet {{source_dir}}/ {{mount_dir}} failed!"
     exit 1
@@ -19,12 +18,12 @@ if curlftpfs -o uid="{{user_id}}",gid="{{group_id}}" "{{frame_address}}" "{{moun
     exit 1
   fi
 else
-  echo "Could not mount Mom's picture frame"
-  if ping -c 1 "{{frame_address}}"; then
-    echo "Ping OK, check the photo frame settings or the filesystem"
+  echo "Could not mount ftp share"
+  if ping -c 1 "{{ftp_share}}"; then
+    echo "Ping OK, check the ftp device settings or the local filesystem permissions"
     exit 1
   else
-    echo "Could not ping the photo frame, is it on?"
+    echo "Could not ping the device, is it on?"
     exit 1
   fi
 fi
