@@ -1,0 +1,10 @@
+[Unit]
+Description="Transfer photos to picture frame hourly"
+
+[Timer]
+OnBootSec=1min
+OnCalendar={{on_calendar}}
+Persistent=true
+
+[Install]
+WantedBy=timers.target
