@@ -1,20 +1,41 @@
 #!/usr/bin/env bash
+# This script will install a systemd service and timer to mount a remote ftp share, rsync a directory to it, and then unmount the share
+# I'm using this to sync photos to a digital picture frame
+#
+# Copyright (c) 2020 Bryan Roessler <bryanroessler@gmail.com>
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+#
 debug="off" # turn "on" for debugging
 # IMPORTANT OPTIONS #
+service_name="rsync-to-picture-frame" # use something specific and memorable
 frame_address="192.168.1.100:2221" # you can find this on the frame, best to make static
-source_dir="$HOME/Pictures/picture_frame" # source pictures directory
-
+source_dir="$HOME/Pictures/picture_frame" # source pictures/content from this directory
 # Less important options
-user="$(whoami)" # default run as current user
-user_id="$(id -u)"
-group_id="$(id -g)"
-script_dir="$PWD" # where to copy the script to, default is $PWD
-dest_dir="/media/picture_frame_ftp" # the ftp mount path
-temp_dir="/tmp/picture_frame_ftp" # ftp does not support rsync temp files
+user="$(id -un)" # default run as current user
+user_id="$(id -u)" # default run as current user
+group_id="$(id -g)" # default run as current user
+script_dir="$PWD" # where to copy the script to, default is $PWD (created automatically if missing)
+mount_dir="/media/picture_frame_ftp" # directory to mount the ftp share to (created automatically if missing)
+temp_dir="/tmp/picture_frame_ftp" # ftp does not support rsync temp files (created automatically if missing)
 # Service settings
 service_dir="$HOME/.config/systemd/user"
-service_name="rsync-to-picture-frame"
-on_calendar="hourly"
+on_calendar="hourly" # how often to mount and sync
 # END USER OPTIONS #
 
 # if debug is on, echo additional output
@@ -124,16 +145,16 @@ main() {
   systemctl --user disable --now "$service_name.timer" &> /dev/null
   
   # Unmount existing ftp share
-  mountpoint -q -- "$dest_dir" && fusermount -u "$dest_dir"
+  mountpoint -q -- "$mount_dir" && fusermount -u "$mount_dir"
 
   # Create directories
-  mk_dir "$source_dir" "$dest_dir" "$service_dir" "$script_dir"
-  chown_dir "$source_dir" "$dest_dir" "$service_dir" "$script_dir"
+  mk_dir "$source_dir" "$mount_dir" "$service_dir" "$script_dir"
+  chown_dir "$source_dir" "$mount_dir" "$service_dir" "$script_dir"
 
   # Copy script file
-  cp_file "$service_name.sh.original" "$script_dir/$service_name.sh"
+  cp_file "original.sh" "$script_dir/$service_name.sh"
   make_exec "$script_dir/$service_name.sh"
-  f_and_r "{{ftp_mount_path}}" "$dest_dir" "$script_dir/$service_name.sh"
+  f_and_r "{{mount_dir}}" "$mount_dir" "$script_dir/$service_name.sh"
   f_and_r "{{source_dir}}" "$source_dir" "$script_dir/$service_name.sh"
   f_and_r "{{frame_address}}" "$frame_address" "$script_dir/$service_name.sh"
   f_and_r "{{user_id}}" "$user_id" "$script_dir/$service_name.sh"
@@ -141,11 +162,11 @@ main() {
   f_and_r "{{temp_dir}}" "$temp_dir" "$script_dir/$service_name.sh"
   
   # Copy service file
-  cp_file "$service_name.service.original" "$service_dir/$service_name.service"
+  cp_file "original.service" "$service_dir/$service_name.service"
   f_and_r "{{path_to_script}}" "$script_dir/$service_name.sh" "$service_dir/$service_name.service"
 
   # Copy timer file
-  cp_file "$service_name.timer.original" "$service_dir/$service_name.timer"
+  cp_file "original.timer" "$service_dir/$service_name.timer"
   f_and_r "{{on_calendar}}" "$on_calendar" "$service_dir/$service_name.timer"
 
   # Enable timer
