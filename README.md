@@ -2,8 +2,8 @@ Usage:
 
 1. Configure user options in `install.sh`
 2. Run `./install.sh` as your normal user
-3. Confirm that user services are running and enabled: `systemctl --user status $service_name.service; systemctl --user status $service_name.timer`
-4. If errors occur, check journal output: `journalctl -r -u $service_name.service`
+3. Confirm that user services are running and enabled: `systemctl --user status $name.service; systemctl --user status $name.timer`
+4. If errors occur, check journal output: `journalctl -r -u $name.service`
 
 Notes:
 
